@@ -1,76 +1,85 @@
-const itemsContainer = document.querySelector('.items');
-let draggedItem = null;
-let shiftX = 0;
-let shiftY = 0;
-let containerRect = itemsContainer.getBoundingClientRect();
+// Your code goes here
 
-function updateContainerBounds() {
-  containerRect = itemsContainer.getBoundingClientRect();
-}
+const container = document.querySelector('.items');
+const cubes = document.querySelectorAll('.item');
 
-function constrainToBounds(x, y, itemWidth, itemHeight) {
-  const padding = 20;
-  const maxX = containerRect.right - containerRect.left - itemWidth - padding;
-  const maxY = containerRect.bottom - containerRect.top - itemHeight - padding;
-  const minX = padding;
-  const minY = padding;
-  
-  return {
-    x: Math.max(minX, Math.min(maxX, x)),
-    y: Math.max(minY, Math.min(maxY, y))
-  };
-}
+let activeCube = null;
+let offsetX = 0;
+let offsetY = 0;
 
-function onMouseDown(event) {
-  if (event.target.classList.contains('item')) {
-    draggedItem = event.target;
-    draggedItem.classList.add('active');
-    itemsContainer.classList.add('active');
-    
-    shiftX = event.clientX - draggedItem.getBoundingClientRect().left;
-    shiftY = event.clientY - draggedItem.getBoundingClientRect().top;
-    
-    draggedItem.style.position = 'absolute';
-    draggedItem.style.zIndex = '1000';
-    draggedItem.style.transition = 'none';
-    
-    updateContainerBounds();
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-    
-    event.preventDefault();
-  }
-}
+// When page loads, place cubes in a grid (absolute) so they can move freely
+window.addEventListener('load', () => {
+  const cols = 5; // how many cubes per row
+  const gap = 20; // space between cubes
 
-function onMouseMove(event) {
-  if (!draggedItem) return;
-  
-  const newX = event.clientX - containerRect.left - shiftX;
-  const newY = event.clientY - containerRect.top - shiftY;
-  
-  const itemRect = draggedItem.getBoundingClientRect();
-  const bounded = constrainToBounds(newX, newY, itemRect.width, itemRect.height);
-  
-  draggedItem.style.left = bounded.x + 'px';
-  draggedItem.style.top = bounded.y + 'px';
-}
+  const cubeWidth = 120;
+  const cubeHeight = 120;
 
-function onMouseUp() {
-  if (draggedItem) {
-    draggedItem.classList.remove('active');
-    draggedItem.style.transition = '';
-    draggedItem = null;
-    itemsContainer.classList.remove('active');
-    
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-  }
-}
+  container.style.position = 'relative';
 
-document.querySelectorAll('.item').forEach(item => {
-  item.draggable = false;
+  cubes.forEach((cube, index) => {
+    cube.style.position = 'absolute';
+    cube.style.width = cubeWidth + 'px';
+    cube.style.height = cubeHeight + 'px';
+
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+
+    const left = col * (cubeWidth + gap);
+    const top = row * (cubeHeight + gap);
+
+    cube.style.left = left + 'px';
+    cube.style.top = top + 'px';
+
+    cube.style.cursor = 'grab';
+  });
 });
 
-itemsContainer.addEventListener('mousedown', onMouseDown);
-window.addEventListener('resize', updateContainerBounds);
-updateContainerBounds();
+// Start dragging
+cubes.forEach(cube => {
+  cube.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+
+    activeCube = cube;
+
+    const cubeRect = cube.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    // Mouse offset inside the cube
+    offsetX = e.clientX - cubeRect.left;
+    offsetY = e.clientY - cubeRect.top;
+
+    cube.style.cursor = 'grabbing';
+  });
+});
+
+// Dragging while mouse moves
+document.addEventListener('mousemove', (e) => {
+  if (!activeCube) return;
+
+  const containerRect = container.getBoundingClientRect();
+  const cubeRect = activeCube.getBoundingClientRect();
+
+  // Calculate new position relative to container
+  let newLeft = e.clientX - containerRect.left - offsetX;
+  let newTop = e.clientY - containerRect.top - offsetY;
+
+  // Boundary conditions: keep cube fully inside container
+  const maxLeft = containerRect.width - cubeRect.width;
+  const maxTop = containerRect.height - cubeRect.height;
+
+  if (newLeft < 0) newLeft = 0;
+  if (newTop < 0) newTop = 0;
+  if (newLeft > maxLeft) newLeft = maxLeft;
+  if (newTop > maxTop) newTop = maxTop;
+
+  activeCube.style.left = newLeft + 'px';
+  activeCube.style.top = newTop + 'px';
+});
+
+// Stop dragging
+document.addEventListener('mouseup', () => {
+  if (!activeCube) return;
+  activeCube.style.cursor = 'grab';
+  activeCube = null;
+});
