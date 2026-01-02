@@ -1,80 +1,30 @@
-// Your code here.
-const itemsContainer = document.querySelector('.items');
-let draggedItem = null;
-let shiftX = 0;
-let shiftY = 0;
-let containerRect = itemsContainer.getBoundingClientRect();
+// Global angle for rotation
+let angle = 0;
 
-function updateContainerBounds() {
-  containerRect = itemsContainer.getBoundingClientRect();
-}
+// Run when the page loads
+window.onload = function () {
+  // Create the line div
+  const line = document.createElement("div"); // [web:22]
+  line.id = "line";
+  line.style.position = "absolute";
+  line.style.width = "200px";
+  line.style.height = "2px";
+  line.style.backgroundColor = "#000000";
+  line.style.top = "50%";
+  line.style.left = "50%";
+  // Center the line and allow rotation around center
+  line.style.transform = "translate(-50%, -50%) rotate(0deg)"; // [web:26][web:40]
+  line.style.transformOrigin = "50% 50%"; // [web:40]
 
-function constrainToBounds(x, y, itemWidth, itemHeight) {
-  const padding = 20; // Account for padding: 100px top/bottom, but use safe padding
-  const maxX = containerRect.right - containerRect.left - itemWidth - padding;
-  const maxY = containerRect.bottom - containerRect.top - itemHeight - padding;
-  const minX = padding;
-  const minY = padding;
-  
-  return {
-    x: Math.max(minX, Math.min(maxX, x)),
-    y: Math.max(minY, Math.min(maxY, y))
-  };
-}
+  document.body.appendChild(line);
 
-function onMouseDown(event) {
-  if (event.target.classList.contains('item')) {
-    draggedItem = event.target;
-    draggedItem.classList.add('active');
-    itemsContainer.classList.add('active');
-    
-    shiftX = event.clientX - draggedItem.getBoundingClientRect().left;
-    shiftY = event.clientY - draggedItem.getBoundingClientRect().top;
-    
-    draggedItem.style.position = 'absolute';
-    draggedItem.style.zIndex = '1000';
-    draggedItem.style.transition = 'none'; // Smooth drag without CSS transitions
-    
-    updateContainerBounds();
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-    
-    event.preventDefault(); // Prevent text selection
-  }
-}
-
-function onMouseMove(event) {
-  if (!draggedItem) return;
-  
-  const newX = event.clientX - containerRect.left - shiftX;
-  const newY = event.clientY - containerRect.top - shiftY;
-  
-  const itemRect = draggedItem.getBoundingClientRect();
-  const bounded = constrainToBounds(newX, newY, itemRect.width, itemRect.height);
-  
-  draggedItem.style.left = bounded.x + 'px';
-  draggedItem.style.top = bounded.y + 'px';
-}
-
-function onMouseUp() {
-  if (draggedItem) {
-    draggedItem.classList.remove('active');
-    draggedItem.style.transition = ''; // Restore CSS transitions
-    draggedItem = null;
-    itemsContainer.classList.remove('active');
-    
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-  }
-}
-
-// Prevent native drag
-document.querySelectorAll('.item').forEach(item => {
-  item.draggable = false;
-});
-
-// Event listeners
-itemsContainer.addEventListener('mousedown', onMouseDown);
-window.addEventListener('resize', updateContainerBounds);
-updateContainerBounds();
-
+  // Rotate every 20 ms, increasing angle by 2 degrees
+  setInterval(function () { // [web:36][web:39]
+    angle += 2;
+    // Keep angle from growing too large (optional, but cleaner)
+    if (angle >= 360) {
+      angle -= 360;
+    }
+    line.style.transform = "translate(-50%, -50%) rotate(" + angle + "deg)"; // [web:22][web:40]
+  }, 20);
+};
