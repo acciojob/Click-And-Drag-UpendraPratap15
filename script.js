@@ -1,38 +1,46 @@
 const slider = document.querySelector('.items');
 
 let isDown = false;
-let startX;
-let scrollLeft;
+let startX = 0;
+let scrollStart = 0;
 
-// Mouse down: start dragging
+// mousedown: start drag
 slider.addEventListener('mousedown', (e) => {
+  // only left button (which: 1 for Cypress)
+  if (e.which !== 1 && e.button !== 0) return;
+
   isDown = true;
   slider.classList.add('active');
 
-  // Starting mouse position
+  // position of mouse within slider, using pageX (as Cypress does)
   startX = e.pageX - slider.offsetLeft;
-  // Current scroll position
-  scrollLeft = slider.scrollLeft;
+  scrollStart = slider.scrollLeft;
+
+  e.preventDefault();
 });
 
-// Mouse leave: stop dragging
+// mouseleave: stop drag
 slider.addEventListener('mouseleave', () => {
   isDown = false;
   slider.classList.remove('active');
 });
 
-// Mouse up: stop dragging
+// mouseup: stop drag
 slider.addEventListener('mouseup', () => {
   isDown = false;
   slider.classList.remove('active');
 });
 
-// Mouse move: scroll while dragging
+// mousemove: update scrollLeft while dragging
 slider.addEventListener('mousemove', (e) => {
-  if (!isDown) return; // only when mouse is down
+  if (!isDown) return;
+
   e.preventDefault();
 
-  const x = e.pageX - slider.offsetLeft;
-  const walk = (x - startX); // distance moved
-  slider.scrollLeft = scrollLeft - walk;
+  const x = e.pageX - slider.offsetLeft;      // current mouse pos
+  const walk = x - startX;                    // how far moved
+
+  // move opposite to drag, so dragging left scrolls right
+  slider.scrollLeft = scrollStart - walk;
 });
+
