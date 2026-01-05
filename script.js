@@ -1,69 +1,38 @@
-const container = document.querySelector('.items');
-const items = document.querySelectorAll('.item');
+const slider = document.querySelector('.items');
 
-let dragItem = null;
-let offsetX = 0;
-let offsetY = 0;
+let isDown = false;
+let startX;
+let scrollLeft;
 
-// Position items absolutely at their initial places
-items.forEach(item => {
-  const rect = item.getBoundingClientRect();
-  const containerRect = container.getBoundingClientRect();
+// Mouse down: start dragging
+slider.addEventListener('mousedown', (e) => {
+  isDown = true;
+  slider.classList.add('active');
 
-  item.style.position = 'absolute';
-  item.style.left = rect.left - containerRect.left + container.scrollLeft + 'px';
-  item.style.top = rect.top - containerRect.top + container.scrollTop + 'px';
+  // Starting mouse position
+  startX = e.pageX - slider.offsetLeft;
+  // Current scroll position
+  scrollLeft = slider.scrollLeft;
 });
 
-// Clamp helper
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
+// Mouse leave: stop dragging
+slider.addEventListener('mouseleave', () => {
+  isDown = false;
+  slider.classList.remove('active');
+});
 
-function onMouseDown(e) {
-  if (!e.target.classList.contains('item')) return;
+// Mouse up: stop dragging
+slider.addEventListener('mouseup', () => {
+  isDown = false;
+  slider.classList.remove('active');
+});
 
-  dragItem = e.target;
-
-  const itemRect = dragItem.getBoundingClientRect();
-  offsetX = e.clientX - itemRect.left;
-  offsetY = e.clientY - itemRect.top;
-
-  dragItem.style.zIndex = 1000;
-
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
-
+// Mouse move: scroll while dragging
+slider.addEventListener('mousemove', (e) => {
+  if (!isDown) return; // only when mouse is down
   e.preventDefault();
-}
 
-function onMouseMove(e) {
-  if (!dragItem) return;
-
-  const containerRect = container.getBoundingClientRect();
-  const itemRect = dragItem.getBoundingClientRect();
-
-  let newLeft = e.clientX - containerRect.left - offsetX + container.scrollLeft;
-  let newTop = e.clientY - containerRect.top - offsetY + container.scrollTop;
-
-  const maxLeft = container.scrollWidth - itemRect.width;
-  const maxTop = containerRect.height - itemRect.height;
-
-  newLeft = clamp(newLeft, 0, maxLeft);
-  newTop = clamp(newTop, 0, maxTop);
-
-  dragItem.style.left = newLeft + 'px';
-  dragItem.style.top = newTop + 'px';
-}
-
-function onMouseUp() {
-  if (!dragItem) return;
-
-  dragItem.style.zIndex = '';
-  dragItem = null;
-
-  document.removeEventListener('mousemove', onMouseMove);
-  document.removeEventListener('mouseup', onMouseUp);
-}
-
-container.addEventListener('mousedown', onMouseDown);
+  const x = e.pageX - slider.offsetLeft;
+  const walk = (x - startX); // distance moved
+  slider.scrollLeft = scrollLeft - walk;
+});
